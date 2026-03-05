@@ -1,0 +1,10 @@
+*.aux
+*.bcf
+*.log
+*.out
+*.xml
+*.gz
+*.blg
+*.bbl
+*.env
+__pycache__
