@@ -8,10 +8,8 @@ def zero_shot(problem, question):
     
     examples_str = "\n".join(examples)
 
-    prefix = "English:" if question.startswith(problem['name']) else f"{problem['name']}:"
-
     prompt = f"""You are an expert translator specialized in solving linguistic puzzles. Translate the target sentence based strictly on the vocabulary and grammar rules implicitly shown in the examples. 
-Provide only the translation line starting with '{prefix}'. Do not provide any explanations or extra text.
+Provide only the translation line. Do not provide any explanations or extra text.
 
 Examples:
 {examples_str}
@@ -19,7 +17,11 @@ Examples:
 Sentence to translate from {question}
 Translation:"""
     
-    return generate_translation(prompt)
+    response = generate_translation(prompt)
+    if ":" in response:
+        response = response.split(":")[-1].strip()
+    
+    return response.strip()
 
 
 # Chain of Thought strategy

@@ -2,7 +2,13 @@ from evaluator import evaluate_predictions
 from prompt_strategies import zero_shot
 import json
 import time
+import re
 
+
+def strip_prefix(text):
+    """Removes 'Language: ' or 'English: ' from the start of a string."""
+    # Matches any characters followed by a colon and a space at the start of the string
+    return re.sub(r'^[^:]+:\s*', '', text).strip()
 
 # Function to parse JSON dataset into a list of problems
 def load_dataset(file_path="../dataset/final_modeLing.json"):
@@ -41,7 +47,7 @@ def main():
     print("Loading dataset...")
     dataset = load_dataset()
     
-    test_problems = dataset[:2]
+    test_problems = dataset[2:4]
     references =[]
     predictions = []
 
@@ -52,7 +58,8 @@ def main():
         problem_preds = []
         problem_refs = problem['answers']
 
-        for q in problem['questions']:
+        for q_raw in problem['questions']:
+            q = strip_prefix(q_raw)
             pred = zero_shot(problem,q)
 
             problem_preds.append(pred)
