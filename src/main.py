@@ -67,15 +67,12 @@ def main():
 
         print()
 
-    print(predictions)
-    print(references)
-
-    '''if predictions:
+    if predictions:
         final_metrics = evaluate_predictions(predictions, references)
         print("FINAL METRICS (Zero-Shot)")
         print(f"Total Questions: {len(predictions)}")
         print(f"BLEU: {final_metrics['BLEU']}")
-        print(f"chrF: {final_metrics['chrF']}")'''
+        print(f"chrF: {final_metrics['chrF']}")
 
 
 if __name__ == "__main__":
