@@ -7,3 +7,18 @@
 </div>
 
 ---
+
+# How to run the code
+
+Create a virtual environment and install the dependencies:
+```
+uv venv .venv --python 3.11
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
+
+Then, enter the `src/` folder and run the `main.py` script:
+```
+cd src
+uv run main.py
+```

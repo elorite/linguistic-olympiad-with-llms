@@ -7,7 +7,7 @@ def zero_shot(problem, question):
         examples.append(f"{s} = {t}")
     
     examples_str = "\n".join(examples)
-
+    
     prompt = f"""You are an expert translator specialized in solving linguistic puzzles. Translate the target sentence based strictly on the vocabulary and grammar rules implicitly shown in the examples. 
 Provide only the translation line. Do not provide any explanations or extra text.
 
