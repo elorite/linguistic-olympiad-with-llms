@@ -3,7 +3,7 @@ import sacrebleu
 def evaluate_predictions(predictions, references):
     """Calculates BLEU and chrF metrics."""
     # sacrebleu expects references as a list of lists
-    refs = [[ref] for ref in references]
+    refs = [references]
     
     bleu = sacrebleu.corpus_bleu(predictions, refs)
     chrf = sacrebleu.corpus_chrf(predictions, refs)

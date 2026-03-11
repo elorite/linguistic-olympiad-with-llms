@@ -1,5 +1,5 @@
 from evaluator import evaluate_predictions
-from prompt_strategies import zero_shot
+from prompt_strategies import zero_shot, cot, custom
 import json
 import time
 import re
@@ -50,14 +50,14 @@ def choose_problems(problems, language="All", difficulty="All", problem_type="Al
     if difficulty != "All":
         filtered_problems = [problem for problem in filtered_problems if problem['difficulty'] == difficulty]
     if problem_type != "All":
-        filtered_problems = [problem for problem in filtered_problems if problem['type'] == problem_type]
+        filtered_problems = [problem for problem in filtered_problems if problem_type in problem['type']]
     return filtered_problems
-
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, default="../dataset/final_modeLing.json", help='Path to the dataset JSON file')
+    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot", "custom" or "comparison"')
+    # TODO: update the --task argument to accept more tasks
     parser.add_argument('--language', type=str, default="All", help='Language to filter problems by (look at the dataset to see available languages, or use "All" for no filtering)')
     parser.add_argument('--difficulty', type=str, default="All", help='Difficulty level to filter problems by (1, 2, 3, 4, 5 or "All" for no filtering)')
     parser.add_argument('--type', type=str, default="All", help='Problem type to filter by (POSS, ORDER, NOUN-ADJ, SEM or "All" for no filtering)')
@@ -68,28 +68,38 @@ if __name__ == "__main__":
     
     test_problems = choose_problems(dataset, language=args.language, difficulty=args.difficulty, problem_type=args.type)
     print(f"Problems selected for evaluation: {len(test_problems)}\n")
+
     references =[]
     predictions = []
-
     results = {}
 
-    # Baseline test
     print("Running Zero-Shot Baseline...\n")
     for problem in test_problems:
         print(f"Processing problem: {problem['name']} - Type: {problem['type']} - Difficulty: {problem['difficulty']}")
         problem_preds = []
-        problem_refs = problem['answers']
+        problem_refs = [strip_prefix(a) for a in problem['answers']]
 
         for q_raw in problem['questions']:
             q = strip_prefix(q_raw)
-            pred = zero_shot(problem,q)
+            if args.task == "baseline":
+                pred = zero_shot(problem,q)
+            elif args.task == "cot":
+                pred = cot(problem, q)
+            elif args.task == "custom":
+                pred = custom(problem,q)
+            elif args.task == "comparison":
+                print("Comparison of strategies not implemented yet.")
+                pred = zero_shot(problem,q)
+            else:
+                print(f"Unknown task: {args.task}.")
+                raise ValueError
 
             problem_preds.append(pred)
             predictions.append(pred)
 
             print(f"Question: {q}")
             print(f"Translation: {pred}")
-            # Sleep to respect the API rate limits (we can do 30 requests per minute, 14.400 per day with gemma27b)
+            # Sleep to respect the API rate limits 
             time.sleep(5)
 
         references.extend(problem_refs)
@@ -125,7 +135,7 @@ if __name__ == "__main__":
         sorted_results = dict(sorted(results.items(), key=lambda x: x[1]['metrics']['BLEU']))
 
         # Save results to a JSON file
-        with open("evaluation_results.json", "w", encoding='utf-8') as f:
+        with open(f"../results/{args.task}_{args.language}_{args.difficulty}_{args.type}.json", "w", encoding='utf-8') as f:
             json.dump(sorted_results, f, indent=4)
 
         # print a comprehensive table of results
@@ -135,4 +145,3 @@ if __name__ == "__main__":
         for problem_name, info in sorted_results.items():
             type_str = info['type'] if isinstance(info['type'], str) else ', '.join(info['type'])
             print(f"{problem_name:<30} {type_str:<10} {str(info['difficulty']):<10} {info['metrics']['BLEU']:<10.4f} {info['metrics']['chrF']:<10.4f}")
-        
