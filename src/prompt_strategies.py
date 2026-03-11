@@ -61,15 +61,15 @@ Perform a step by step metalinguistic analysis. Before providing the translation
     
     response = generate_translation(prompt)
     
-    # Extraction Logic: Get only the text after "Final Translation:"
+    # get only the text after "Final Translation:"
     if "Final Translation:" in response:
         prediction = response.split("Final Translation:")[-1].strip()
     else:
-        # Fallback: take the last non-empty line
+        # fallback: take the last line
         lines = [line.strip() for line in response.split('\n') if line.strip()]
         prediction = lines[-1] if lines else ""
 
-    # Final cleanup to remove any lingering "English:" or language labels
+    # final cleanup to remove any language labels
     if ":" in prediction:
         prediction = prediction.split(":")[-1].strip()
 
