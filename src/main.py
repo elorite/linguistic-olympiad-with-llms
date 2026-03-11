@@ -85,7 +85,7 @@ if __name__ == "__main__":
     for problem in test_problems:
         print(f"Processing problem: {problem['name']} - Type: {problem['type']} - Difficulty: {problem['difficulty']}")
         problem_preds = []
-        problem_refs = problem['answers']
+        problem_refs = [strip_prefix(a) for a in problem['answers']]
 
         for q_raw in problem['questions']:
             q = strip_prefix(q_raw)
@@ -121,6 +121,8 @@ if __name__ == "__main__":
         
 
     if predictions:
+        print(len(predictions),predictions)
+        print(len(references), references)
         final_metrics = evaluate_predictions(predictions, references)
         print(f"FINAL METRICS ({strategy_to_use})")
         print(f"Total Questions: {len(predictions)}")
