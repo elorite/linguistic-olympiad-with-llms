@@ -1,5 +1,5 @@
 from evaluator import evaluate_predictions
-from prompt_strategies import zero_shot, cot_linguistic
+from prompt_strategies import zero_shot, cot_linguistic, custom
 import json
 import time
 import re
@@ -86,7 +86,7 @@ if __name__ == "__main__":
             if args.task == "baseline":
                 pred = zero_shot(problem,q)
             elif args.task == "cot":
-                pred = cot(problem, q)
+                pred = cot_linguistic(problem, q)
             elif args.task == "custom":
                 pred = custom(problem,q)
             elif args.task == "comparison":
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         #print(len(predictions),predictions)
         #print(len(references), references)
         final_metrics = evaluate_predictions(predictions, references)
-        print(f"FINAL METRICS ({strategy_to_use})")
+        print(f"FINAL METRICS - ({args.task})")
         print(f"Total Questions: {len(predictions)}")
         print(f"BLEU: {final_metrics['BLEU']}")
         print(f"chrF: {final_metrics['chrF']}")

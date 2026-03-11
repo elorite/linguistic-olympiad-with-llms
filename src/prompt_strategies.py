@@ -83,3 +83,60 @@ Perform a step by step metalinguistic analysis. Before providing the translation
         prediction = prediction.split(":")[-1].strip()
 
     return prediction
+
+def custom(problem, question):
+    examples = []
+    for s,t in zip(problem['source_examples'], problem['target_examples']):
+        examples.append(f"{s} = {t}")
+    
+    examples_str = "\n".join(examples)
+    
+    prompt = f"""
+You are an expert translator specialized in solving linguistic puzzles. 
+
+You should follow a reasoning process that is based on sentence comparison, that is the task of comparing 
+different translations to understand common words which lead to a confirmation of that translation in 
+the vocabulary. Follow these steps:
+1.  Analyze the sentences and relative translations in a sequential manner and try to identify simpler
+    translations first, so we can start building the vocabulary. For example, if you have the following 
+    sentences in an hypothetical dataset (Nung language) and the relative translations in English:
+    
+    Nung: Cáu ca vửhn nhahng kíhn.
+    English: I was about to continue to eat it.
+    
+    Nung: Cáu cháhn slờng páy mi?
+    English: Do I truly want to go?
+
+    You can easily understand that 'Cáu' refers to 'I', since in both it appears at the beginning and in the 
+    English translation you have 'I' at the beginning.
+
+    So the key idea here is to find patterns in the sentences which help you understand the simpler words in 
+    the vocabulary.
+
+2.  Certain more complex words may even be understood the above way, but usually verbs, adjectives and nouns are 
+    hard to translate. So now you have to take the remaining non-translated part of the sentence in the low-resource
+    language and try to understand it's meaning given the remaining part in the relative translation. This is 
+    a hard task and can be completed with sentence comparison. From it you can define some grammatical rules and 
+    some basic word order. However, the objective up to this point is mainly to determine the vocabulary, so focus on that.
+
+3.  Once created the vocabulary and the relative word-to-word translation, you can translate word-to-word a sentence and then 
+    write the sentence translated in the other language. For example, one word in Nung may refer to 'negative imperative' and so 
+    you have to give it a meaning in English, which could be 'Don't' if it is at the beginning of the sentence. 
+
+4.  The final step is to figure out the word order. From the dataset you should try to understand the word order of each language
+    so that you can then apply it to the relative translation. As an example, in English the word order is Subject-Verb-Objective, but in 
+    another language it may be different. Finding it out will help you determine the final order of the translation considering that 
+    you have translated word-by-word. 
+
+Now, translate the target sentence following this step-by-step reasoning and use the examples below to understand 
+all the semantic meaning and grammatical rules you need to make the correct translation. The final output has to be 
+just the final translation of the relative target sentence.
+
+Examples:
+{examples_str}
+
+Sentence to translate from {question}
+Translation:"""
+    
+    response = generate_translation(prompt)
+    return _clean_response(response)
