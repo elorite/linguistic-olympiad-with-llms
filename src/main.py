@@ -1,5 +1,5 @@
 from evaluator import evaluate_predictions
-from prompt_strategies import zero_shot, cot, custom
+from prompt_strategies import zero_shot, cot_linguistic
 import json
 import time
 import re
@@ -48,6 +48,7 @@ def choose_problems(problems, language="All", difficulty="All", problem_type="Al
     if language != "All":
         filtered_problems = [problem for problem in filtered_problems if re.sub(r'\d+$', '', problem['name']).replace(" ", "") == language]
     if difficulty != "All":
+        difficulty = int(difficulty)
         filtered_problems = [problem for problem in filtered_problems if problem['difficulty'] == difficulty]
     if problem_type != "All":
         filtered_problems = [problem for problem in filtered_problems if problem_type in problem['type']]
@@ -61,14 +62,14 @@ if __name__ == "__main__":
     parser.add_argument('--language', type=str, default="All", help='Language to filter problems by (look at the dataset to see available languages, or use "All" for no filtering)')
     parser.add_argument('--difficulty', type=str, default="All", help='Difficulty level to filter problems by (1, 2, 3, 4, 5 or "All" for no filtering)')
     parser.add_argument('--type', type=str, default="All", help='Problem type to filter by (POSS, ORDER, NOUN-ADJ, SEM or "All" for no filtering)')
+    parser.add_argument('--strategy', type=str, default="zero-shot", help='Prompt strategy to use (zero-shot or chain-of-thought)')
     args = parser.parse_args()
 
-    print("Loading dataset...")
+    #print("Loading dataset...")
     dataset = load_dataset(args.dataset_path)
-    
     test_problems = choose_problems(dataset, language=args.language, difficulty=args.difficulty, problem_type=args.type)
-    print(f"Problems selected for evaluation: {len(test_problems)}\n")
-
+    print(f"Configuration:\nLanguage: {args.language}\nDifficulty: {args.difficulty}\nProblem Type: {args.type}\nPrompt Strategy: {args.strategy}")
+    print(f"\nProblems selected for evaluation: {len(test_problems)}\n")
     references =[]
     predictions = []
     results = {}
@@ -77,6 +78,7 @@ if __name__ == "__main__":
     for problem in test_problems:
         print(f"Processing problem: {problem['name']} - Type: {problem['type']} - Difficulty: {problem['difficulty']}")
         problem_preds = []
+        problem_refs = [strip_prefix(a) for a in problem['answers']]
         problem_refs = [strip_prefix(a) for a in problem['answers']]
 
         for q_raw in problem['questions']:
@@ -121,10 +123,13 @@ if __name__ == "__main__":
             "difficulty": problem['difficulty'],
             "metrics": problem_metrics
         }
+        
 
     if predictions:
+        #print(len(predictions),predictions)
+        #print(len(references), references)
         final_metrics = evaluate_predictions(predictions, references)
-        print("FINAL METRICS (Zero-Shot)")
+        print(f"FINAL METRICS ({strategy_to_use})")
         print(f"Total Questions: {len(predictions)}")
         print(f"BLEU: {final_metrics['BLEU']}")
         print(f"chrF: {final_metrics['chrF']}")
