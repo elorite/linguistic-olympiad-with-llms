@@ -121,8 +121,8 @@ if __name__ == "__main__":
         
 
     if predictions:
-        print(len(predictions),predictions)
-        print(len(references), references)
+        #print(len(predictions),predictions)
+        #print(len(references), references)
         final_metrics = evaluate_predictions(predictions, references)
         print(f"FINAL METRICS ({strategy_to_use})")
         print(f"Total Questions: {len(predictions)}")
