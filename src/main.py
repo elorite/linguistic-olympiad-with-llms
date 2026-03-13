@@ -62,23 +62,21 @@ if __name__ == "__main__":
     parser.add_argument('--language', type=str, default="All", help='Language to filter problems by (look at the dataset to see available languages, or use "All" for no filtering)')
     parser.add_argument('--difficulty', type=str, default="All", help='Difficulty level to filter problems by (1, 2, 3, 4, 5 or "All" for no filtering)')
     parser.add_argument('--type', type=str, default="All", help='Problem type to filter by (POSS, ORDER, NOUN-ADJ, SEM or "All" for no filtering)')
-    parser.add_argument('--strategy', type=str, default="zero-shot", help='Prompt strategy to use (zero-shot or chain-of-thought)')
     args = parser.parse_args()
 
     #print("Loading dataset...")
     dataset = load_dataset(args.dataset_path)
     test_problems = choose_problems(dataset, language=args.language, difficulty=args.difficulty, problem_type=args.type)
-    print(f"Configuration:\nLanguage: {args.language}\nDifficulty: {args.difficulty}\nProblem Type: {args.type}\nPrompt Strategy: {args.strategy}")
+    print(f"Configuration:\nLanguage: {args.language}\nDifficulty: {args.difficulty}\nProblem Type: {args.type}\nPrompt Strategy: {args.task}")
     print(f"\nProblems selected for evaluation: {len(test_problems)}\n")
     references =[]
     predictions = []
     results = {}
 
-    print("Running Zero-Shot Baseline...\n")
+    print(f"Running {args.task} task...\n")
     for problem in test_problems:
         print(f"Processing problem: {problem['name']} - Type: {problem['type']} - Difficulty: {problem['difficulty']}")
         problem_preds = []
-        problem_refs = [strip_prefix(a) for a in problem['answers']]
         problem_refs = [strip_prefix(a) for a in problem['answers']]
 
         for q_raw in problem['questions']:
