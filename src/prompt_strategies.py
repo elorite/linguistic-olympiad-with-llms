@@ -70,7 +70,7 @@ Perform a step by step metalinguistic analysis. Before providing the translation
     
     response = generate_translation(prompt)
     
-    # Get only the text after "Final Translation:"
+    # Get translation
     if "Final Translation:" in response:
         prediction = response.split("Final Translation:")[-1].strip()
     else:
@@ -78,7 +78,7 @@ Perform a step by step metalinguistic analysis. Before providing the translation
         lines = [line.strip() for line in response.split('\n') if line.strip()]
         prediction = lines[-1] if lines else ""
 
-    # Final cleanup to remove any language labels
+    # Final cleanup to remove any language labels (like English:)
     if ":" in prediction:
         prediction = prediction.split(":")[-1].strip()
 
@@ -140,3 +140,61 @@ Translation:"""
     
     response = generate_translation(prompt)
     return _clean_response(response)
+
+
+
+def generator_critic(problem, question):
+    examples = []
+    for s,t in zip(problem['source_examples'], problem['target_examples']):
+        examples.append(f"{s} = {t}")
+    
+    examples_str = "\n".join(examples)
+
+    # generator
+    forward_prompt = f"""You are an expert translator specialized in solving linguistic puzzles. Analyze the following examples: 
+### EXAMPLES
+{examples_str}
+
+### YOUR OBJECTIVE
+Translate the following sentence "{question}".
+Identify the rule/s for this translation. 
+
+### RESPONSE FORMAT
+1. Rule: [Provide the rule/s used]
+2. Translation: [ONLY the translated text, no prefixes]"""
+    
+    draft = generate_translation(forward_prompt)
+
+    # critic
+    back_prompt = f"""You are an expert linguistic translator verifying a linguistic hypothesis made by another translator. You need to verify the translation against the evidence.
+### EXAMPLES (The Truth)
+{examples_str}
+
+### PROPOSED TRANSLATION
+Target: "{question}"
+Proposed Result: "{draft}"
+
+### INSTRUCTIONS:
+1. Look at every word and affix in the Proposed Result.
+2. Check if this contradicts any of the EXAMPLES.
+3. If the translator made a mistake, correct it.
+4. If it is correct, repeat it. 
+5. All the words in the sentence can be translated by analyzing the examples.
+
+### RESPONSE FORMAT
+1. Analysis: [Your reasoning]
+2. FINAL TRANSLATION: [ONLY the translation text, no prefixes]"""
+    
+    response = generate_translation(back_prompt)
+    if "FINAL TRANSLATION:" in response:
+        prediction = response.split("FINAL TRANSLATION:")[-1].strip()
+    else:
+        # Fallback, take the last line
+        lines = [line.strip() for line in response.split('\n') if line.strip()]
+        prediction = lines[-1] if lines else ""
+
+    # Final cleanup to remove any language labels
+    if ":" in prediction:
+        prediction = prediction.split(":")[-1].strip()
+
+    return prediction

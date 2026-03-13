@@ -1,5 +1,5 @@
 from evaluator import evaluate_predictions
-from prompt_strategies import zero_shot, cot_linguistic, custom
+from prompt_strategies import zero_shot, cot_linguistic, custom, generator_critic
 import json
 import time
 import re
@@ -57,7 +57,7 @@ def choose_problems(problems, language="All", difficulty="All", problem_type="Al
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, default="../dataset/final_modeLing.json", help='Path to the dataset JSON file')
-    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot", "custom" or "comparison"')
+    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot", "custom", "generator-critic" or "comparison"')
     # TODO: update the --task argument to accept more tasks
     parser.add_argument('--language', type=str, default="All", help='Language to filter problems by (look at the dataset to see available languages, or use "All" for no filtering)')
     parser.add_argument('--difficulty', type=str, default="All", help='Difficulty level to filter problems by (1, 2, 3, 4, 5 or "All" for no filtering)')
@@ -87,6 +87,8 @@ if __name__ == "__main__":
                 pred = cot_linguistic(problem, q)
             elif args.task == "custom":
                 pred = custom(problem,q)
+            elif args.task == "generator-critic":
+                pred = generator_critic(problem, q)
             elif args.task == "comparison":
                 print("Comparison of strategies not implemented yet.")
                 pred = zero_shot(problem,q)
