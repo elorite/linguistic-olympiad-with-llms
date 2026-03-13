@@ -5,10 +5,8 @@ import time
 import re
 import argparse
 
-
+# Removes 'Language: ' or 'English: ' from the start of a string
 def strip_prefix(text):
-    """Removes 'Language: ' or 'English: ' from the start of a string."""
-    # Matches any characters followed by a colon and a space at the start of the string
     return re.sub(r'^[^:]+:\s*', '', text).strip()
 
 # Function to parse JSON dataset into a list of problems
