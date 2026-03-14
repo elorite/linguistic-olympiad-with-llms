@@ -72,6 +72,8 @@ The evaluation is performed with two main metrics:
 	\item \textbf{chrF} - This is a character-based metric that catches small changes and details in a word.
 \end{itemize}
 
+All the prompts follow a specific structure in order to make the task clear to the LLM. First, we show the model the examples, then we give the specific objective or task, which is to translate a new sentence. Before the model can give the final translation, we also specify the specific instructions it has to follow, in case the method requires it. Finally, the model can give the translation following a specific format.
+
 \section{Baseline Evaluation}
 The first step consisted on seeing how the model performed using a zero-shot approach and with a basic prompt. In this strategy, we just showed the model the examples and asked for the translation without any special instructions.
 At first, we evaluate this approach on the entire dataset, but then we selected only the Bangime language since results showed that the model was not performing well on it, at least in the majority of the questions. The results in terms of BLEU and chrF are shown in Table~\ref{tab:baseline}.
@@ -100,11 +102,11 @@ The prompt used for this baseline evaluation is shown in the Appendix.
 
 \section{Prompting Strategies}
 
-We tested three different approaches to see if we were able to improve the overall performance of the model on the Bangime problems. The first one is a Chain of Thought method, where we ask the model to explicitly analyze the examples and think about some universal linguistic concepts before giving the final answer. The second one is a generator-critic loop, where we have two different prompts: one for the generator, which is similar to the zero-shot prompt but asking for an explicit rule, and another one for the critic, which is given the proposed translation and has to check if it contradicts any of the examples. Finally, we also tried a back-translation strategy, where we ask the model to translate back its own translation and check if it matches with the original sentence. If it does not match, we ask it to identify the specific words or morphemes that are causing the mismatch and fix them.
+We tested three different approaches to see if we were able to improve the overall performance of the model on the Bangime problems. The first one is a Chain of Thought method, where we ask the model to explicitly analyze the examples and think step by step about some universal linguistic concepts before giving the final answer. The second one is a generator-critic loop, where we use a two-pass strategy. For each pass we have a different prompt: in the first pass the prompt is for the generator, which is similar to the zero-shot prompt but asking for an explicit rule; and in the second pass the prompt is for the critic, which is given the proposed translation and has to check if it contradicts any of the examples. Finally, we also tried a back-translation strategy, where we ask the model to translate back its own translation and check if it matches with the original sentence. If it does not match, we ask it to identify the specific words or morphemes that are causing the mismatch and fix them.
 In the appendix we show the exact prompts used for each of these strategies, which were designed to be as clear and specific as possible in order to guide the model's reasoning process.
 
-\section{Results and Analysis}
-
+\section{Results}
+In this section we show the results obtained with the different prompting strategies, represented as the difference (delta) between the results of the strategy and the baseline. A positive number means the strategy improved the result, while a negative number means it performed worse than the baseline.
 \begin{table}[h]
 \centering
 \caption{Improvement in BLEU and chrF scores between baseline and cot\_linguistics}
@@ -169,6 +171,11 @@ Average		& +2.854 & +13.266 \\
 \end{table}
 
 \section{Discussion}
+In Table~\ref{tab:improvement_baseline_cotl} we can see the performance of the CoT strategy compared to the baseline. The most interesting finding in our results is that the BLEU score and the chrF score do not always move in the same direction. For example, in \textbf{Bangime 3}, the BLEU score decreased by 2 points, but the chrF score increased by 15. In \textbf{Bangime 4} the BLEU score dropped even more (-11 points), while the chrF score showed a small improvement.
+
+One possible explanation comes from the way these two metrics work. As BLEU is based on full words, if the model gets one letter wrong, the BLEU score for that word is zero. On the other hand, chrF looks at characters. In linguistic puzzles, this difference is important. Sometimes, the model gets the root and the suffix of the word right, but then it makes a small mistake or adds an extra character. BLEU punishes this kind of mistakes a lot, but chrF recognizes the word structure is mostly correct. In these cases, the CoT strategy is helping the model undestang how words are built, but still doesn't get perfect words.
+
+In other problems like \textbf{Bangime}, \textbf{Bangime 2} and \textbf{Bangime 5}, the model improves both in BLEU and chrF scores, so in these cases the model get's full words right, and the CoT strategy is very effective. In noun-adjective problem types, the model still struggles, and only manages to improve the chrF score, while the BLEU score remains intact. As the chrF still improves, we can say that the CoT strategy is much better at capturing the logic of the puzzles, and the model is learning how to form words like a linguistic, showing an attempt at metalinguistic reasoning.
 
 \section{Conclusions}
 In this work we...
@@ -189,37 +196,44 @@ In this work we...
 
 \subsection{Zero-Shot Prompt}
 \begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
-You are an expert translator specialized in solving
-linguistic puzzles. Translate the target sentence based
-strictly on the vocabulary and grammar rules implicitly
-shown in the examples.
+You are an expert translator specialized
+in solving linguistic puzzles. Translate 
+the target sentence based strictly on 
+the vocabulary and grammar rules 
+implicitly shown in the examples.
 ### EXAMPLES
 {examples}
 
 ### YOUR OBJECTIVE
-Translate the following sentence: {question}
+Translate the following sentence: 
+{question}
 
 ### RESPONSE FORMAT
-Provide only the translation line. Do not provide any
-explanations or extra text.
+Provide only the translation line. Do 
+not provide any explanations or extra 
+text.
 Translation:
 \end{lstlisting}
 
 \subsection{Chain of Thought with Linguistic Concepts}
 \begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
-You are a Linguistic Olympiad expert. Your task is to
-solve a translation puzzle by extracting rules from
-limited examples.
+You are a Linguistic Olympiad expert. 
+Your task is to solve a translation 
+puzzle by extracting rules from limited 
+examples.
 ### EXAMPLES
 {examples}
 
 ### YOUR OBJECTIVE
-Translate the following sentence: {question}
+Translate the following sentence: 
+{question}
 
 ### INSTRUCTIONS
-Perform a step by step metalinguistic analysis. Before
-providing the translation, explicitly consider these 10
-concepts if they are relevant to the patterns you see:
+Perform a step by step metalinguistic
+analysis. Before providing the
+translation, explicitly consider these
+10 concepts if they are relevant to the
+patterns you see:
 1. Agents and patients
 2. Grammatical functions and cases
 3. Affixation
@@ -238,14 +252,16 @@ concepts if they are relevant to the patterns you see:
 
 \subsection{Generator-Critic: Generator Prompt}
 \begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
-You are an expert translator specialized in solving
-linguistic puzzles. Analyze the following examples:
+You are an expert translator specialized 
+in solving linguistic puzzles. Analyze 
+the following examples:
 ### EXAMPLES
 {examples}
 
 ### YOUR OBJECTIVE
-Translate the following sentence "{question}".
-Identify the rule/s for this translation.
+Translate the following sentence 
+"{question}".
+Identify the rule/s for this translation
 
 ### RESPONSE FORMAT
 1. Rule: [Provide the rule/s used]
@@ -254,9 +270,11 @@ Identify the rule/s for this translation.
 
 \subsection{Generator-Critic: Critic Prompt}
 \begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
-You are an expert linguistic translator verifying a
-linguistic hypothesis made by another translator. You
-need to verify the translation against the evidence.
+You are an expert linguistic translator
+verifying a linguistic hypothesis made
+by another translator. You need to 
+verify the translation against the 
+evidence.
 ### EXAMPLES (The Truth)
 {examples}
 
@@ -269,8 +287,7 @@ Proposed Result: "{draft}"
 2. Check if this contradicts any of the EXAMPLES.
 3. If the translator made a mistake, correct it.
 4. If it is correct, repeat it.
-5. All the words in the sentence can be translated by
-   analyzing the examples.
+5. All the words in the sentence can be translated by analyzing the examples.
 
 ### RESPONSE FORMAT
 1. Analysis: [Your reasoning]
@@ -279,8 +296,9 @@ Proposed Result: "{draft}"
 
 \subsection{Back-Translation: Verification Prompt}
 \begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
-You are a Linguistic Olympiad expert verifying a
-translation by translating it back.
+You are a Linguistic Olympiad expert 
+verifying a translation by translating 
+it back.
 
 ### EXAMPLES
 {examples}
@@ -292,14 +310,10 @@ translation by translating it back.
 {forward_translation}
 
 ### INSTRUCTIONS
-1. Using the same examples and rules, translate the
-   proposed translation BACK into the original language
+1. Using the same examples and rules, translate the proposed translation BACK into the original language
 2. Compare your back-translation with the original
-3. If the back-translation matches, the proposed
-   translation is correct - return it as is
-4. If it does NOT match, identify the specific
-   words/morphemes causing the mismatch and fix the
-   forward translation accordingly
+3. If the back-translation matches, the proposed translation is correct - return it as is
+4. If it does NOT match, identify the specific words/morphemes causing the mismatch and fix the forward translation accordingly
 
 ### RESPONSE FORMAT
 1. Back-translation: [Your back-translation]
