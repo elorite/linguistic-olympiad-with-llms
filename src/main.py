@@ -55,7 +55,7 @@ def choose_problems(problems, language="All", difficulty="All", problem_type="Al
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, default="../dataset/final_modeLing.json", help='Path to the dataset JSON file')
-    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot_linguistic", "cot", "custom", "generator-critic" or "comparison"')
+    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot_linguistic", "cot", "generator-critic" or "back_translation"')
     # TODO: update the --task argument to accept more tasks
     parser.add_argument('--language', type=str, default="All", help='Language to filter problems by (look at the dataset to see available languages, or use "All" for no filtering)')
     parser.add_argument('--difficulty', type=str, default="All", help='Difficulty level to filter problems by (1, 2, 3, 4, 5 or "All" for no filtering)')

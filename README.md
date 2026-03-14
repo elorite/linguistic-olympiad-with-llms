@@ -22,3 +22,10 @@ Then, enter the `src/` folder and run the `main.py` script:
 cd src
 uv run main.py
 ```
+
+>[!NOTE]
+> You can specify several flags to personalize the analysis:
+> - `--task` - refers to which task to run (default -> baseline)
+> - `--language` - choose a language from the dataset (default -> All)
+> - `--difficulty` - choose a difficulty level from the dataset (default -> All)
+> - `--type` - choose a problem type from the dataset (default -> All)
