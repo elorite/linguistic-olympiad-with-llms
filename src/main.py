@@ -1,5 +1,5 @@
 from evaluator import evaluate_predictions
-from prompt_strategies import zero_shot, cot_linguistic, custom
+from prompt_strategies import (zero_shot, cot_linguistic, back_translation)
 import json
 import time
 import re
@@ -57,7 +57,7 @@ def choose_problems(problems, language="All", difficulty="All", problem_type="Al
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, default="../dataset/final_modeLing.json", help='Path to the dataset JSON file')
-    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot", "custom" or "comparison"')
+    parser.add_argument('--task', type=str, default="baseline", help='Task to run: "baseline", "cot_linguistic", "cot", "custom" or "comparison"')
     # TODO: update the --task argument to accept more tasks
     parser.add_argument('--language', type=str, default="All", help='Language to filter problems by (look at the dataset to see available languages, or use "All" for no filtering)')
     parser.add_argument('--difficulty', type=str, default="All", help='Difficulty level to filter problems by (1, 2, 3, 4, 5 or "All" for no filtering)')
@@ -81,14 +81,18 @@ if __name__ == "__main__":
         problem_refs = [strip_prefix(a) for a in problem['answers']]
         problem_refs = [strip_prefix(a) for a in problem['answers']]
 
+        # For grammar_induction: extract grammar once per problem
+        grammar_sheet = None
+        examples_str = None
+
         for q_raw in problem['questions']:
             q = strip_prefix(q_raw)
             if args.task == "baseline":
                 pred = zero_shot(problem,q)
-            elif args.task == "cot":
+            elif args.task == "cot_linguistic":
                 pred = cot_linguistic(problem, q)
-            elif args.task == "custom":
-                pred = custom(problem,q)
+            elif args.task == "back_translation":
+                pred = back_translation(problem, q)
             elif args.task == "comparison":
                 print("Comparison of strategies not implemented yet.")
                 pred = zero_shot(problem,q)
