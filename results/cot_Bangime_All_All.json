@@ -1,0 +1,72 @@
+{
+    "Bangime 6": {
+        "type": [
+            "NOUN-ADJ"
+        ],
+        "difficulty": 3,
+        "metrics": {
+            "BLEU": 0.0,
+            "chrF": 8.953
+        }
+    },
+    "Bangime 7": {
+        "type": [
+            "NOUN-ADJ"
+        ],
+        "difficulty": 4,
+        "metrics": {
+            "BLEU": 0.0,
+            "chrF": 51.301
+        }
+    },
+    "Bangime 3": {
+        "type": [
+            "ORDER"
+        ],
+        "difficulty": 4,
+        "metrics": {
+            "BLEU": 23.666,
+            "chrF": 47.209
+        }
+    },
+    "Bangime 5": {
+        "type": [
+            "ORDER"
+        ],
+        "difficulty": 3,
+        "metrics": {
+            "BLEU": 36.556,
+            "chrF": 65.488
+        }
+    },
+    "Bangime": {
+        "type": [
+            "ORDER"
+        ],
+        "difficulty": 3,
+        "metrics": {
+            "BLEU": 39.66,
+            "chrF": 53.233
+        }
+    },
+    "Bangime 4": {
+        "type": [
+            "ORDER"
+        ],
+        "difficulty": 2,
+        "metrics": {
+            "BLEU": 46.977,
+            "chrF": 74.442
+        }
+    },
+    "Bangime 2": {
+        "type": [
+            "ORDER"
+        ],
+        "difficulty": 1,
+        "metrics": {
+            "BLEU": 65.804,
+            "chrF": 98.707
+        }
+    }
+}

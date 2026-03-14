@@ -1,0 +1,97 @@
+\documentclass[
+	a4paper, % Paper size, use either a4paper or letterpaper
+	10pt, % Default font size, can also use 11pt or 12pt, although this is not recommended
+	unnumberedsections, % Comment to enable section numbering
+	twoside, % Two side traditional mode where headers and footers change between odd and even pages, comment this option to make them fixed
+]{LTJournalArticle}
+
+\usepackage{lettrine}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{listings}
+
+\addbibresource{references.bib} % BibLaTeX bibliography file
+
+\runninghead{Linguistic Olympiads Problems with LLMs} % A shortened article title to appear in the running head, leave this command empty for no running head
+
+\footertext{} % Text to appear in the footer, leave this command empty for no footer text
+
+\setcounter{page}{1} % The page number of the first page, set this to a higher number if the article is to be part of an issue or larger work
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\title{Solving Linguistic Olympiads Problems with Large Language Models} % Article title, use manual lines breaks (\\) to beautify the layout
+
+% Authors are listed in a comma-separated list with superscript numbers indicating affiliations
+% \thanks{} is used for any text that should be placed in a footnote on the first page, such as the corresponding author's email, journal acceptance dates, a copyright/license notice, keywords, etc
+\author{%
+	Christian Faccio\textsuperscript{1} \thanks{\href{mailto:christianfaccio@outlook.it}{christianfaccio@outlook.it}} and Elena Lorite\textsuperscript{1} \thanks{\href{mailto:elenalorite@gmail.com}{elenalorite@gmail.com}}
+}
+
+% Affiliations are output in the \date{} command
+\date{\footnotesize\textsuperscript{\textbf{1}}University of Alicante}
+
+% Full-width abstract
+\renewcommand{\maketitlehookd}{%
+	\begin{abstract}
+		\noindent In this report we explore the ability of the Gemma 3 27B language model to solve linguistic puzzles. These problems require identifying grammar rules from a few examples of low resource languages. We tested different prompting strategies, like a zero-shot baseline, a Chain of Thought method using universal concepts, a generator-critic loop and a back-translation strategy. We want to find out if we can help LLMs think in a more systematic way.
+	\end{abstract}
+}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+\maketitle % Output the title section
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE CONTENTS
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+\lettrine[findent=2pt]{\textbf{M}}{}ost language models work very well when using English or other major languages, but there are more than 7000 languages in the world, and current models only support a small fraction of them. Many cultures are left out of this new digital era we are living so, to fix this, we need to know if AI can learn a language with very little data, like a human linguistic would do. 
+
+Linguistic Olympiads problems are a great way to test this, as the puzzles provide a few sentences in a very low-resource language with their translation. We do not need to know the language to solve them, we only need to find patterns in order to apply logic. If a LLM could solve these puzzles, it would show that it has the ability to think about how a language is structured.
+
+In this project we use the Gemma 3 27B model to try and solve problems from the modeLing dataset. We focus on some strategies to see which one helps the model the most. The goal is to see if we make the model "think" in a more systematic way of solving this type of problems.
+
+\section{Experimental Setup and Methodology}
+The development of this project is done with the modeLing dataset, which is in JSON format. It is specifically designed to test how LLMs handles this low resource languages. Each problem in the file fincludes:
+\begin{itemize}
+	\item Data. A set of examples in the low resource language with their English translations.
+	\item Questions. New phrases that the model must translate.
+	\item Answers. The "ground truth" translations to check if the model is right. 
+\end{itemize}
+
+Each phrase in the dataset is accompanied by a prefix with the name of the language that phrase is in. For example, "English:" or "Abun:". We removed these kind of prefixes in order to make the evaluation more fair and ensuring the model only worked with raw text.
+
+As for the model, we accessed it through a free remote API, and set the temperature parameter to zero in order to get the most probable answer everytime.
+
+The evaluation is performed with two main metrics:
+\begin{itemize}
+	\item BLEU. This counts how many words in the model's answer match the ground truth answer.
+	\item chrF. This is a character-based metric that catches small changes and details in a word.
+\end{itemize}
+
+\section{Baseline Evaluation}
+The first step consisted on seeing how the model performed using a zero-shot approach. In this strategy, we just showed the model the examples and asked for the translation without any special instructions.
+
+\section{Creative Prompting Strategies}
+
+\section{Results and Analysis}
+
+\section{Discussion}
+
+\section{Conclusions}
+In this work we...
+%----------------------------------------------------------------------------------------
+%	 REFERENCES
+%----------------------------------------------------------------------------------------
+
+\printbibliography % Output the bibliography
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
