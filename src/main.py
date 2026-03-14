@@ -1,5 +1,5 @@
 from evaluator import evaluate_predictions
-from prompt_strategies import (zero_shot, cot_linguistic, back_translation), generator_critic
+from prompt_strategies import (zero_shot, cot_linguistic, back_translation, generator_critic)
 import json
 import time
 import re
