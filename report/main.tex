@@ -9,6 +9,7 @@
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage[toc,page]{appendix}
 
 \addbibresource{references.bib} % BibLaTeX bibliography file
 
@@ -36,7 +37,7 @@
 % Full-width abstract
 \renewcommand{\maketitlehookd}{%
 	\begin{abstract}
-		\noindent In this report we explore the ability of the Gemma 3 27B language model to solve linguistic puzzles. These problems require identifying grammar rules from a few examples of low resource languages. We tested different prompting strategies, like a zero-shot baseline, a Chain of Thought method using universal concepts, a generator-critic loop and a back-translation strategy. We want to find out if we can help LLMs think in a more systematic way.
+		\noindent In this report we explore the ability of the Gemma 3 27B language model to solve linguistic puzzles. These problems require identifying grammar rules from a few examples of low resource languages. We tested different prompting strategies, like a zero-shot baseline, a Chain of Thought method using universal concepts, a generator-critic loop and a back-translation strategy. Using these strategies, we were able to improve the model's baseline performance on the BLEU and chrF metrics. We also found that adding a critic or a back-translation step to the process did not help to achieve even better results, suggesting that more complexification does not necessarily mean better performance and that a single well-defined prompt can be enough to make the model perform well on this type of problems.
 	\end{abstract}
 }
 
@@ -52,35 +53,120 @@
 
 \section{Introduction}
 \lettrine[findent=2pt]{\textbf{M}}{}ost language models work very well when using English or other major languages, but there are more than 7000 languages in the world, and current models only support a small fraction of them. Many cultures are left out of this new digital era we are living so, to fix this, we need to know if AI can learn a language with very little data, like a human linguistic would do. 
-
 Linguistic Olympiads problems are a great way to test this, as the puzzles provide a few sentences in a very low-resource language with their translation. We do not need to know the language to solve them, we only need to find patterns in order to apply logic. If a LLM could solve these puzzles, it would show that it has the ability to think about how a language is structured.
 
-In this project we use the Gemma 3 27B model to try and solve problems from the modeLing dataset. We focus on some strategies to see which one helps the model the most. The goal is to see if we make the model "think" in a more systematic way of solving this type of problems.
+In this project we use the Gemma 3 27B model to try and solve problems from the modeLing dataset, specifically the Bangime language which is a low-resource language and on a baseline evaluation obtains poor results (even if not in all cases). We focus on some strategies to see which one helps the model the most. The goal is to see if we make the model "think" in a more systematic way of solving this type of problems.
 
 \section{Experimental Setup and Methodology}
-The development of this project is done with the modeLing dataset, which is in JSON format. It is specifically designed to test how LLMs handles this low resource languages. Each problem in the file fincludes:
+The development of this project is done with the \href{https://github.com/nathanchi/modeLing}{modeLing} dataset, which is in JSON format. It is specifically designed to test how LLMs handles this low resource languages. Each problem in the file fincludes:
 \begin{itemize}
-	\item Data. A set of examples in the low resource language with their English translations.
-	\item Questions. New phrases that the model must translate.
-	\item Answers. The "ground truth" translations to check if the model is right. 
+	\item Data - A set of examples in the low resource language with their English translations.
+	\item Questions - New phrases that the model must translate.
+	\item Answers - The "ground truth" translations to check if the model is right. 
 \end{itemize}
-
 Each phrase in the dataset is accompanied by a prefix with the name of the language that phrase is in. For example, "English:" or "Abun:". We removed these kind of prefixes in order to make the evaluation more fair and ensuring the model only worked with raw text.
-
 As for the model, we accessed it through a free remote API, and set the temperature parameter to zero in order to get the most probable answer everytime.
-
 The evaluation is performed with two main metrics:
 \begin{itemize}
-	\item BLEU. This counts how many words in the model's answer match the ground truth answer.
-	\item chrF. This is a character-based metric that catches small changes and details in a word.
+	\item \textbf{BLEU} - This counts how many words in the model's answer match the ground truth answer.
+	\item \textbf{chrF} - This is a character-based metric that catches small changes and details in a word.
 \end{itemize}
 
 \section{Baseline Evaluation}
-The first step consisted on seeing how the model performed using a zero-shot approach. In this strategy, we just showed the model the examples and asked for the translation without any special instructions.
+The first step consisted on seeing how the model performed using a zero-shot approach and with a basic prompt. In this strategy, we just showed the model the examples and asked for the translation without any special instructions.
+At first, we evaluate this approach on the entire dataset, but then we selected only the Bangime language since results showed that the model was not performing well on it, at least in the majority of the questions. The results in terms of BLEU and chrF are shown in Table~\ref{tab:baseline}.
 
-\section{Creative Prompting Strategies}
+\begin{table}[h]
+\centering
+\caption{Baseline (zero-shot) results on Bangime problems.}
+\label{tab:baseline}
+\begin{tabular}{l c c c}
+\hline
+\textbf{Type} & \textbf{Difficulty} & \textbf{BLEU} & \textbf{chrF} \\
+\hline
+ORDER    & 3 & 18.53 & 28.79 \\
+ORDER    & 1 & 51.30 & 91.07 \\
+ORDER    & 4 & 25.19 & 27.62 \\
+ORDER    & 2 & 50.36 & 63.17 \\
+ORDER    & 3 & 19.64 & 43.25 \\
+NOUN-ADJ & 3 &  0.00 & 20.80 \\
+NOUN-ADJ & 4 &  0.00 & 51.17 \\
+\hline
+\end{tabular}
+\end{table}
+
+As is possible to see, the model performs very poorly on noun-adjective constructs types, while a better performance is achieved on the rest.
+The prompt used for this baseline evaluation is shown in the Appendix.
+
+\section{Prompting Strategies}
+
+We tested three different approaches to see if we were able to improve the overall performance of the model on the Bangime problems. The first one is a Chain of Thought method, where we ask the model to explicitly analyze the examples and think about some universal linguistic concepts before giving the final answer. The second one is a generator-critic loop, where we have two different prompts: one for the generator, which is similar to the zero-shot prompt but asking for an explicit rule, and another one for the critic, which is given the proposed translation and has to check if it contradicts any of the examples. Finally, we also tried a back-translation strategy, where we ask the model to translate back its own translation and check if it matches with the original sentence. If it does not match, we ask it to identify the specific words or morphemes that are causing the mismatch and fix them.
+In the appendix we show the exact prompts used for each of these strategies, which were designed to be as clear and specific as possible in order to guide the model's reasoning process.
 
 \section{Results and Analysis}
+
+\begin{table}[h]
+\centering
+\caption{Improvement in BLEU and chrF scores between baseline and cot\_linguistics}
+\label{tab:improvement_baseline_cotl}
+\begin{tabular}{l c c}
+\hline
+\textbf{Problem} & \textbf{dBLEU} & \textbf{dchrF} \\
+\hline
+Bangime    & +21.157 & +41.025 \\
+Bangime 2    & +4.564 & +6.755 \\
+Bangime 3    & -2.080 & +15.528 \\
+Bangime 4    & -11.021 & +2.480 \\
+Bangime 5    & +13.457 & +20.198 \\
+Bangime 6    & +0.000 &  +12.025 \\
+Bangime 7    & +0.000 & +19.005 \\
+\hline
+Average		& +3.725 & +16.717 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Improvement in BLEU and chrF scores between baseline and generator critique}
+\label{tab:improvement_baseline_gencr}
+\begin{tabular}{l c c}
+\hline
+\textbf{Problem} & \textbf{dBLEU} & \textbf{dchrF} \\
+\hline
+Bangime    & +4.830 & +21.117 \\
+Bangime 2    & +4.564 & +6.755 \\
+Bangime 3    & -3.055 & +25.609 \\
+Bangime 4    & -38.115 & -26.912 \\
+Bangime 5    & -1.575 & +12.242 \\
+Bangime 6    & +0.000 &  -11.843 \\
+Bangime 7    & +0.000 & +8.297 \\
+\hline
+Average		& -4.764 & +5.038 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Improvement in BLEU and chrF scores between baseline and back-translation}
+\label{tab:improvement_baseline_backtr}
+\begin{tabular}{l c c}
+\hline
+\textbf{Problem} & \textbf{dBLEU} & \textbf{dchrF} \\
+\hline
+Bangime    & +21.133 & +32.681 \\
+Bangime 2    & +14.503 & +7.634 \\
+Bangime 3    & +4.599 & +29.788 \\
+Bangime 4    & -38.144 & -9.107 \\
+Bangime 5    & +17.890 & +23.074 \\
+Bangime 6    & +0.000 &  +10.254 \\
+Bangime 7    & +0.000 & -1.465 \\
+\hline
+Average		& +2.854 & +13.266 \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Discussion}
 
@@ -90,7 +176,138 @@ In this work we...
 %	 REFERENCES
 %----------------------------------------------------------------------------------------
 
+\nocite{neacșu2024linguistics}
 \printbibliography % Output the bibliography
+
+%----------------------------------------------------------------------------------------
+%	APPENDIX - PROMPTS
+%----------------------------------------------------------------------------------------
+
+\begin{appendices}
+
+\section{Prompts Used}\label{app:prompts}
+
+\subsection{Zero-Shot Prompt}
+\begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
+You are an expert translator specialized in solving
+linguistic puzzles. Translate the target sentence based
+strictly on the vocabulary and grammar rules implicitly
+shown in the examples.
+### EXAMPLES
+{examples}
+
+### YOUR OBJECTIVE
+Translate the following sentence: {question}
+
+### RESPONSE FORMAT
+Provide only the translation line. Do not provide any
+explanations or extra text.
+Translation:
+\end{lstlisting}
+
+\subsection{Chain of Thought with Linguistic Concepts}
+\begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
+You are a Linguistic Olympiad expert. Your task is to
+solve a translation puzzle by extracting rules from
+limited examples.
+### EXAMPLES
+{examples}
+
+### YOUR OBJECTIVE
+Translate the following sentence: {question}
+
+### INSTRUCTIONS
+Perform a step by step metalinguistic analysis. Before
+providing the translation, explicitly consider these 10
+concepts if they are relevant to the patterns you see:
+1. Agents and patients
+2. Grammatical functions and cases
+3. Affixation
+4. Word order
+5. Morphological strategy
+6. Noun classes and gender
+7. Number systems
+8. Tense, aspect, and mood
+9. Pro-drop
+10. Agreement
+
+### RESPONSE FORMAT
+1. Analysis: [Your step by step reasoning]
+2. Final Translation: [ONLY the translated text]
+\end{lstlisting}
+
+\subsection{Generator-Critic: Generator Prompt}
+\begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
+You are an expert translator specialized in solving
+linguistic puzzles. Analyze the following examples:
+### EXAMPLES
+{examples}
+
+### YOUR OBJECTIVE
+Translate the following sentence "{question}".
+Identify the rule/s for this translation.
+
+### RESPONSE FORMAT
+1. Rule: [Provide the rule/s used]
+2. Translation: [ONLY the translated text]
+\end{lstlisting}
+
+\subsection{Generator-Critic: Critic Prompt}
+\begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
+You are an expert linguistic translator verifying a
+linguistic hypothesis made by another translator. You
+need to verify the translation against the evidence.
+### EXAMPLES (The Truth)
+{examples}
+
+### PROPOSED TRANSLATION
+Target: "{question}"
+Proposed Result: "{draft}"
+
+### INSTRUCTIONS:
+1. Look at every word and affix in the Proposed Result.
+2. Check if this contradicts any of the EXAMPLES.
+3. If the translator made a mistake, correct it.
+4. If it is correct, repeat it.
+5. All the words in the sentence can be translated by
+   analyzing the examples.
+
+### RESPONSE FORMAT
+1. Analysis: [Your reasoning]
+2. FINAL TRANSLATION: [ONLY the translation text]
+\end{lstlisting}
+
+\subsection{Back-Translation: Verification Prompt}
+\begin{lstlisting}[breaklines=true, basicstyle=\ttfamily\small, frame=single]
+You are a Linguistic Olympiad expert verifying a
+translation by translating it back.
+
+### EXAMPLES
+{examples}
+
+### ORIGINAL SENTENCE
+{question}
+
+### PROPOSED TRANSLATION
+{forward_translation}
+
+### INSTRUCTIONS
+1. Using the same examples and rules, translate the
+   proposed translation BACK into the original language
+2. Compare your back-translation with the original
+3. If the back-translation matches, the proposed
+   translation is correct - return it as is
+4. If it does NOT match, identify the specific
+   words/morphemes causing the mismatch and fix the
+   forward translation accordingly
+
+### RESPONSE FORMAT
+1. Back-translation: [Your back-translation]
+2. Comparison: [Does it match? What mismatches exist?]
+3. Final Translation: [The corrected translation]
+\end{lstlisting}
+
+\end{appendices}
 
 %----------------------------------------------------------------------------------------
 
