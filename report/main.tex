@@ -58,14 +58,14 @@ Linguistic Olympiads problems are a great way to test this, as the puzzles provi
 In this project we use the Gemma 3 27B model to try and solve problems from the modeLing dataset, specifically the Bangime language which is a low-resource language and on a baseline evaluation obtains poor results (even if not in all cases). We focus on some strategies to see which one helps the model the most. The goal is to see if we make the model "think" in a more systematic way of solving this type of problems.
 
 \section{Experimental Setup and Methodology}
-The development of this project is done with the \href{https://github.com/nathanchi/modeLing}{modeLing} dataset, which is in JSON format. It is specifically designed to test how LLMs handles this low resource languages. Each problem in the file fincludes:
+The development of this project is done with the \href{https://github.com/nathanchi/modeLing}{modeLing} dataset, which is in JSON format. It is specifically designed to test how LLMs handle these low-resource languages. Each problem in the file includes:
 \begin{itemize}
-	\item Data - A set of examples in the low resource language with their English translations.
+	\item Data - A set of examples in the low-resource language with their English translations.
 	\item Questions - New phrases that the model must translate.
 	\item Answers - The "ground truth" translations to check if the model is right. 
 \end{itemize}
-Each phrase in the dataset is accompanied by a prefix with the name of the language that phrase is in. For example, "English:" or "Abun:". We removed these kind of prefixes in order to make the evaluation more fair and ensuring the model only worked with raw text.
-As for the model, we accessed it through a free remote API, and set the temperature parameter to zero in order to get the most probable answer everytime.
+Each phrase in the dataset is accompanied by a prefix with the name of the language that sentence is in. For example, "English:" or "Abun:". We removed these kinds of prefixes in order to make the evaluation more fair, ensuring the model only worked with raw text.
+As for the model, we accessed it through a free remote API, and set the temperature parameter to zero in order to get the most probable answer every time.
 The evaluation is performed with two main metrics:
 \begin{itemize}
 	\item \textbf{BLEU} - This counts how many words in the model's answer match the ground truth answer.
@@ -76,7 +76,7 @@ All the prompts follow a specific structure in order to make the task clear to t
 
 \section{Baseline Evaluation}
 The first step consisted on seeing how the model performed using a zero-shot approach and with a basic prompt. In this strategy, we just showed the model the examples and asked for the translation without any special instructions.
-At first, we evaluate this approach on the entire dataset, but then we selected only the Bangime language since results showed that the model was not performing well on it, at least in the majority of the questions. The results in terms of BLEU and chrF are shown in Table~\ref{tab:baseline}.
+At first, we evaluated this approach on the entire dataset, but then we selected only the Bangime language since results showed that the model was not performing well on it, at least in the majority of the questions. The results in terms of BLEU and chrF are shown in Table~\ref{tab:baseline}.
 
 \begin{table}[h]
 \centering
@@ -103,7 +103,7 @@ The prompt used for this baseline evaluation is shown in the Appendix.
 \section{Prompting Strategies}
 
 We tested three different approaches to see if we were able to improve the overall performance of the model on the Bangime problems. The first one is a Chain of Thought method, where we ask the model to explicitly analyze the examples and think step by step about some universal linguistic concepts before giving the final answer. The second one is a generator-critic loop, where we use a two-pass strategy. For each pass we have a different prompt: in the first pass the prompt is for the generator, which is similar to the zero-shot prompt but asking for an explicit rule; and in the second pass the prompt is for the critic, which is given the proposed translation and has to check if it contradicts any of the examples. Finally, we also tried a back-translation strategy, where we ask the model to translate back its own translation and check if it matches with the original sentence. If it does not match, we ask it to identify the specific words or morphemes that are causing the mismatch and fix them.
-In the appendix we show the exact prompts used for each of these strategies, which were designed to be as clear and specific as possible in order to guide the model's reasoning process.
+In the Appendix we show the exact prompts used for each of these strategies, which were designed to be as clear and specific as possible in order to guide the model's reasoning process.
 
 \section{Results}
 In this section we show the results obtained with the different prompting strategies, represented as the difference (delta) between the results of the strategy and the baseline. A positive number means the strategy improved the result, while a negative number means it performed worse than the baseline.
@@ -171,14 +171,31 @@ Average		& +2.854 & +13.266 \\
 \end{table}
 
 \section{Discussion}
-In Table~\ref{tab:improvement_baseline_cotl} we can see the performance of the CoT strategy compared to the baseline. The most interesting finding in our results is that the BLEU score and the chrF score do not always move in the same direction. For example, in \textbf{Bangime 3}, the BLEU score decreased by 2 points, but the chrF score increased by 15. In \textbf{Bangime 4} the BLEU score dropped even more (-11 points), while the chrF score showed a small improvement.
+In Table~\ref{tab:improvement_baseline_cotl} we can see the performance of the CoT strategy compared to the baseline. The most interesting finding in our results is that the BLEU score and the chrF score do not always move in the same direction. For example, in \textbf{Bangime 3}, the BLEU score decreased by 2 points, but the chrF score increased by 15.5. In \textbf{Bangime 4} the BLEU score dropped even more (-11 points), while the chrF score showed a small improvement.
+One possible explanation comes from the way these two metrics work. As BLEU is based on full words, if the model gets one letter wrong, the BLEU score for that word is zero. On the other hand, chrF looks at characters. In linguistic puzzles, this difference is important, because sometimes the model gets the root and the suffix of the word right, but then it makes a small mistake or adds an extra character. BLEU punishes this types of mistakes a lot, but chrF recognizes the word structure is mostly correct. In these cases, the CoT strategy is helping the model undestand how words are built, but still doesn't get perfect words.
+In other problems like \textbf{Bangime}, \textbf{Bangime 2} and \textbf{5}, the model improves both in BLEU and chrF scores, so in these cases the model gets full words right, and the CoT strategy is very effective. In noun-adjective problem types, the model still struggles, and only manages to improve the chrF score, while the BLEU score remains intact. As the chrF still improves, we can say that the CoT strategy is much better at capturing the logic of the puzzles, and the model is learning how to form words like a linguistic, showing an attempt at metalinguistic reasoning.
 
-One possible explanation comes from the way these two metrics work. As BLEU is based on full words, if the model gets one letter wrong, the BLEU score for that word is zero. On the other hand, chrF looks at characters. In linguistic puzzles, this difference is important. Sometimes, the model gets the root and the suffix of the word right, but then it makes a small mistake or adds an extra character. BLEU punishes this kind of mistakes a lot, but chrF recognizes the word structure is mostly correct. In these cases, the CoT strategy is helping the model undestang how words are built, but still doesn't get perfect words.
 
-In other problems like \textbf{Bangime}, \textbf{Bangime 2} and \textbf{Bangime 5}, the model improves both in BLEU and chrF scores, so in these cases the model get's full words right, and the CoT strategy is very effective. In noun-adjective problem types, the model still struggles, and only manages to improve the chrF score, while the BLEU score remains intact. As the chrF still improves, we can say that the CoT strategy is much better at capturing the logic of the puzzles, and the model is learning how to form words like a linguistic, showing an attempt at metalinguistic reasoning.
+Table~\ref{tab:improvement_baseline_gencr} shows the results obtained using the Generator-Critic strategy, where the model creates a translation and then a "Critic" prompt reviews it for errors. The results this time were more inconsistent and, on average, the BLEU score decreased by 4.7 points, while the chrF score had a small increase of 5 points.
+The most significant result is in \textbf{Bangime 4}, because both scores dropped excessively. This may be an example of over-correction, where the model likely had a decent answer but then the Critic changed the answer into something that did not match at all. Adding a second pass not always work and may introduce more errors if the model is not entirely sure about the rules. As in Chain of Thought, in \textbf{Bangime 3} the model was able to fix small details, as the increase in the chrF score suggests, but then again the BLEU score went down slightly, so the whole word was not right. It shows this strategy also helps the model stay closer to the word structure. \textbf{Bangime 6} is once again a problem for the model, because not only the BLEU score stayed the same, but the chrF score went down. This could be a sign of the model hallucinating rules or over-correction.
+The Generator-Critic method seems to be less reliable than the CoT strategy. In the end, our CoT approach gives the model rules to follow from the beginning, so it is expected that a strategy like that performs really well and others that do not rely on the set of rules don't. It would be interesting to mix both strategies and give the set of rules to either the Generator or the Critic.
+
+
+Finally, in Table~\ref{tab:improvement_baseline_backtr} the results for the back-translation strategy are shown. On average this strategy improved the BLEU score by 2.8 points and the chrF score by 13.2 points. Like in the other strategies, there is a strong improvement in chrF scores, standing out in \textbf{Bangime 3} and \textbf{5}. In these problems, the model not only managed to improve the BLEU score, but also it achieved the highest score increases (for both scores) among all methods. Even if on average the method was not able to surpass the results obtained by the CoT strategy, it has potential in some problems. Translating back and forth may be helping the model realize a word looks wrong at character level, that is, the model is careful about little details of the language.
+However, this strategy can be risky. We can see a big drop of scores in \textbf{Bangime 4}, as it happened in the Generator-Critic strategy. This confirms once more that this specific problem is very difficult for the model, although the difficulty is of 2. One problem it might be happening with back-translation is that the model is doing two different tasks, and maybe it's good at translating to English, but makes mistakes when translating to the other language. So, for example, if the model translates a word right in English, but then when translating back to the source language, the model does it poorly, it might think that the original correct translation was wrong. Other problems that keep being problematic are \textbf{Bangime 6} and \textbf{7}, the BLEU score didn't improve, as in the other strategies, and \textbf{Bangime 6} showed a small decrease in the chrF score.
+Overall back-translation is a very useful tool and shows a lot of potential, being the second best strategy among the three implemented, but still isn't as reliable as Chain of Thought. The chance of the model translating back wrongly and ruining a good first answer is what is holding back this strategy.  
+
+
+
 
 \section{Conclusions}
-In this work we...
+In this work we showed that a large language model like Gemma 3 27B is capable of performing some sort of metalinguistic reasoning, but still needs a very clear structure to do so. Without a specific strategy, the model seems to act more like a guesser based on how the words sound. However, when we provided the model with the "linguistic toolbox", the model acts with logic.
+
+The most important conclusion is that a structured reasoning (Chain of Thought) is more effective than adding loops, at least at first glance. Our results showed the model is very good at recognizing rules when we force it to check concepts. The problem is that the model might still struggle to apply the rules perfectly. The chrF score improved in almost every test, suggesting that the model indeed understands some internal structure of the words, even if making small mistakes that ruin the BLEU score.
+
+Although we think that two or more passes strategies seem to be worse than a single prompt, it would be very interesting to introduce the Chain of Thought concept into one of the two-passes strategies. Specially on the back-translation method, which is a very interesting approach as it is, and might benefit from the set of rules and step-by-step reasoning.
+
+In conclusion, LLMs can be very strong assistants for linguistics. They are not perfect, but with this project we saw what a small-medium sized model can do, so we can imagine how much the bigger LLMs can help at identifying patterns and building the basis for understanding low-resource languages. Apart from giving more data to AI to make it smarter, it is also very important to teach it to think as humans would do.
 %----------------------------------------------------------------------------------------
 %	 REFERENCES
 %----------------------------------------------------------------------------------------
